@@ -1,7 +1,6 @@
 package com.jug6ernaut.debugdrawer.views;
 
 import android.app.Activity;
-import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -10,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
+
 import com.jug6ernaut.debugdrawer.DebugView;
 import com.jug6ernaut.debugdrawer.R;
 import com.jug6ernaut.debugdrawer.utils.ActivityEventListener;
@@ -26,155 +26,167 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
  * Created by williamwebb on 6/28/14.
  */
 public abstract class DebugModule {
-    private final String             title;
-    private final List<DebugElement> elements   = new ArrayList<>();
-    private final List<DebugModule>  subModules = new ArrayList<>();
 
-    private DebugView parent;
-    private ExpandableView view;
+	private final String title;
+	private final List<DebugElement> elements = new ArrayList<>();
+	private final List<DebugModule> subModules = new ArrayList<>();
 
-    public DebugModule(String title) {
-        this.title = title;
-    }
+	private DebugView parent;
+	private ExpandableView view;
 
-    protected abstract void onAttach(Activity activity, DebugView parent);
+	public DebugModule(String title) {
+		this.title = title;
+	}
 
-    private void init(Activity activity, DebugView parent) {
-        this.parent = parent; // TODO: Verify submodules need this set
-        registerActivityListener(activity);
-    }
+	protected abstract void onAttach(Activity activity, DebugView parent);
 
-    public void addElement(DebugElement... element) {
-        for (DebugElement de : element) {
-            elements.add(de);
-        }
-    }
+	private void init(Activity activity, DebugView parent) {
+		this.parent = parent; // TODO: Verify submodules need this set
+		registerActivityListener(activity);
+	}
 
-    public void addModule(DebugModule... module) {
-        for (DebugModule dm : module) {
-            subModules.add(dm);
-        }
-    }
+	public void addElement(DebugElement... element) {
+		for (DebugElement de : element) {
+			elements.add(de);
+		}
+	}
 
-    public List<DebugElement> getElements() {
-        return elements;
-    }
+	public void addModule(DebugModule... module) {
+		for (DebugModule dm : module) {
+			subModules.add(dm);
+		}
+	}
 
-    private void _attach(DebugModule module, Activity activity, DebugView parent) {
-        module.init(activity,parent); // Internal setup
-        module.onAttach(activity, parent); // External setup
-    }
+	public List<DebugElement> getElements() {
+		return elements;
+	}
 
-    public void attach(Activity activity, DebugView parent) {
-        // init this module and all subModules
-        _attach(this,activity,parent);
-        for(DebugModule dm : subModules) {
-            _attach(dm,activity,parent);
-        }
+	private void _attach(DebugModule module, Activity activity, DebugView parent) {
+		module.init(activity, parent); // Internal setup
+		module.onAttach(activity, parent); // External setup
+	}
 
-        TextView header = createHeader(activity);
-        ViewGroup children = addChildren(parent);
+	public void attach(Activity activity, DebugView parent) {
+		// init this module and all subModules
+		_attach(this, activity, parent);
+		for (DebugModule dm : subModules) {
+			_attach(dm, activity, parent);
+		}
 
-        view = new ExpandableView(parent.getContext(),header,children);
-        parent.addView(view);
+		TextView header = createHeader(activity);
+		ViewGroup children = addChildren(parent);
 
-        notifyModuleAttached(activity,this);
-        for(DebugModule dm : subModules) {
-            notifyModuleAttached(activity,dm);
-        }
-    }
+		view = new ExpandableView(parent.getContext(), header, children);
+		parent.addView(view);
 
-    private TextView createHeader(Activity activity) {
-        TextView titleView = new TextView(new ContextThemeWrapper(activity, R.style.Widget_U2020_DebugDrawer_Header));
-        titleView.setText(title);
-        int dp02 = (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 2, activity.getResources().getDisplayMetrics());
-        titleView.setPadding(0,dp02,0,dp02);
+		notifyModuleAttached(activity, this);
+		for (DebugModule dm : subModules) {
+			notifyModuleAttached(activity, dm);
+		}
+	}
 
-        LayoutParams lp = new LayoutParams(MATCH_PARENT, WRAP_CONTENT);
-        titleView.setLayoutParams(lp);
-        return titleView;
-    }
+	private TextView createHeader(Activity activity) {
+		TextView titleView = new TextView(new ContextThemeWrapper(activity, R.style.Widget_U2020_DebugDrawer_Header));
+		titleView.setText(title);
+		int dp02 = (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 4, activity.getResources().getDisplayMetrics());
+		titleView.setPadding(0, dp02, 0, dp02);
 
-    private ViewGroup addChildren(ViewGroup parent) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        LinearLayout ll = new LinearLayout(parent.getContext());
-        ll.setOrientation(LinearLayout.VERTICAL);
-        ll.setLayoutParams(new LayoutParams(MATCH_PARENT,WRAP_CONTENT));
+		LayoutParams lp = new LayoutParams(MATCH_PARENT, WRAP_CONTENT);
+		titleView.setLayoutParams(lp);
+		return titleView;
+	}
 
-        DisplayMetrics metrics = parent.getContext().getResources().getDisplayMetrics();
-        int dp02 = (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 2, metrics);
-        int dp05 = (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 5, metrics);
-        ll.setPadding(dp05,dp02,0,0);
+	private ViewGroup addChildren(ViewGroup parent) {
+		LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+		LinearLayout ll = new LinearLayout(parent.getContext());
+		ll.setOrientation(LinearLayout.VERTICAL);
+		ll.setLayoutParams(new LayoutParams(MATCH_PARENT, WRAP_CONTENT));
 
-        // Attach this module elements and subModule elements
-        attachElements(inflater,parent,ll,elements);
-        for(DebugModule subModule : subModules) {
-            attachElements(inflater,parent,ll,subModule.getElements());
-        }
+		// Attach this module elements and subModule elements
+		attachElements(inflater, parent, ll, elements);
+		for (DebugModule subModule : subModules) {
+			attachElements(inflater, parent, ll, subModule.getElements());
+		}
 
-        return ll;
-    }
+		return ll;
+	}
 
-    private void notifyModuleAttached(Activity activity, DebugModule debugModule) {
-        for (DebugElement e : debugModule.elements) {
-            e.onModuleAttached(activity,this);
-        }
-    }
+	private void notifyModuleAttached(Activity activity, DebugModule debugModule) {
+		for (DebugElement e : debugModule.elements) {
+			e.onModuleAttached(activity, this);
+		}
+	}
 
-    private void attachElements(LayoutInflater inflater, ViewGroup parent, ViewGroup toAdd, Collection<DebugElement> debugElements) {
-        for (DebugElement e : debugElements) {
-            View view = e.create(this,inflater, parent);
-            toAdd.addView(view);
-        }
-    }
+	private void attachElements(LayoutInflater inflater, ViewGroup parent, ViewGroup toAdd, Collection<DebugElement> debugElements) {
+		for (DebugElement e : debugElements) {
+			View view = e.create(this, inflater, parent);
+			toAdd.addView(view);
+		}
+	}
 
-    private void registerActivityListener(Activity activity) {
-        // Cleans up after itself, no need to unregister
-        new ActivityEventListener(activity) {
-            @Override
-            public void onStart(Activity activity) {
-                postEvent(DrawerEvent.ACTIVITY_START);
-            }
+	private void registerActivityListener(Activity activity) {
+		// Cleans up after itself, no need to unregister
+		new ActivityEventListener(activity) {
+			@Override
+			public void onStart(Activity activity) {
+				postEvent(DrawerEvent.ACTIVITY_START);
+			}
 
-            public void onStopped(Activity activity) {
-                postEvent(DrawerEvent.ACTIVITY_STOP);
-            }
-        }.register(activity.getApplication());
-    }
+			public void onStopped(Activity activity) {
+				postEvent(DrawerEvent.ACTIVITY_STOP);
+			}
+		}.register(activity.getApplication());
+	}
 
-    public String getTitle() {
-        return title;
-    }
+	public String getTitle() {
+		return title;
+	}
 
-    public ExpandableView getView() {
-        return view;
-    }
+	public ExpandableView getView() {
+		return view;
+	}
 
-    public void onDrawerOpened() {
-        postEvent(DrawerEvent.OPENED);
-    }
+	public void onDrawerOpened() {
+		postEvent(DrawerEvent.OPENED);
+	}
 
-    public void onDrawerClosed() {
-        postEvent(DrawerEvent.CLOSED);
-    }
+	public void onDrawerClosed() {
+		postEvent(DrawerEvent.CLOSED);
+	}
 
-    public DebugView getParent() {
-        return parent;
-    }
+	public DebugView getParent() {
+		return parent;
+	}
 
-    enum DrawerEvent {
-        OPENED,
-        CLOSED,
-        ACTIVITY_START,
-        ACTIVITY_STOP
-    }
+	enum DrawerEvent {
+		OPENED,
+		CLOSED,
+		ACTIVITY_START,
+		ACTIVITY_STOP
+	}
 
-    private void postEvent(DrawerEvent event) {
-        switch (event) {
-            case OPENED: for (DebugElement e : elements) e.onDrawerOpened(); break;
-            case CLOSED: for (DebugElement e : elements) e.onDrawerClosed(); break;
-            case ACTIVITY_START: for (DebugElement e : elements) e.onActivityStart(); break;
-            case ACTIVITY_STOP: for (DebugElement e : elements) e.onActivityStop(); break;
-        }
-    }
+	private void postEvent(DrawerEvent event) {
+		switch (event) {
+		case OPENED:
+			for (DebugElement e : elements) {
+				e.onDrawerOpened();
+			}
+			break;
+		case CLOSED:
+			for (DebugElement e : elements) {
+				e.onDrawerClosed();
+			}
+			break;
+		case ACTIVITY_START:
+			for (DebugElement e : elements) {
+				e.onActivityStart();
+			}
+			break;
+		case ACTIVITY_STOP:
+			for (DebugElement e : elements) {
+				e.onActivityStop();
+			}
+			break;
+		}
+	}
 }

@@ -18,7 +18,6 @@ import com.jug6ernaut.debugdrawer.views.DebugModule;
 import com.jug6ernaut.saber.Preference;
 import com.jug6ernaut.saber.Saber;
 import com.jug6ernaut.saber.preferences.BooleanPreference;
-import com.mattprecious.telescope.TelescopeLayout;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -159,13 +158,11 @@ public final class DebugDrawer {
 	static class ViewHolder {
 		DebugDrawerLayout  drawerLayout;
 		ViewGroup          debugDrawer;
-		TelescopeLayout    telescopeLayout;
 		ScalpelFrameLayout content;
 
 		public ViewHolder(View view) {
 			drawerLayout = findById(view, R.id.debug_drawer_layout);
 			debugDrawer = findById(view, R.id.debug_drawer);
-			telescopeLayout = findById(view, R.id.telescope_container);
 			content = findById(view, R.id.debug_content);
 		}
 	}
